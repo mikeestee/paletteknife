@@ -6,7 +6,8 @@
  */
 // Locate a child node by name and type.
 const findChild = (node, name, type) => {
-    return node.findChild((node) => {
+    // find first instance, recursively
+    return node.findOne((node) => {
         return node.name === name && node.type == type;
     });
 };
@@ -158,8 +159,10 @@ if (figma.editorType === "figma") {
             // validate that msg contains "name" and "colors"
             const paletteName = msg.colors.name;
             const paletteColors = msg.colors.colors;
-            // find 'PaintChip' component
-            const paintChip = findChild(figma.currentPage, "PaintChip", "COMPONENT");
+            // find 'PaintChip' component, search only top level
+            const paintChip = figma.currentPage.findChild((node) => {
+                return node.name === "PaintChip" && node.type == "COMPONENT";
+            });
             if (paintChip && msg.colors) {
                 // make sure the 'PaintChip' is set up properly before we create any
                 const hasColor = findChild(paintChip, "Color", "RECTANGLE");

@@ -11,7 +11,8 @@ const findChild = (
   name: string,
   type: string
 ): SceneNode => {
-  return node.findChild((node: SceneNode): boolean => {
+  // find first instance, recursively
+  return node.findOne((node: SceneNode): boolean => {
     return node.name === name && node.type == type;
   });
 };
@@ -193,12 +194,13 @@ if (figma.editorType === "figma") {
       const paletteName = msg.colors.name;
       const paletteColors = msg.colors.colors;
 
-      // find 'PaintChip' component
-      const paintChip: ComponentNode = findChild(
-        figma.currentPage,
-        "PaintChip",
-        "COMPONENT"
+      // find 'PaintChip' component, search only top level
+      const paintChip = figma.currentPage.findChild(
+        (node: SceneNode): boolean => {
+          return node.name === "PaintChip" && node.type == "COMPONENT";
+        }
       ) as ComponentNode;
+
       if (paintChip && msg.colors) {
         // make sure the 'PaintChip' is set up properly before we create any
         const hasColor = findChild(paintChip, "Color", "RECTANGLE");

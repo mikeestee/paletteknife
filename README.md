@@ -2,6 +2,8 @@
 
 The Figma plugin allows you to create and update ColorStyle palettes from a JSON description.
 
+[Example](Example.jpg)
+
 Example:
 
 ```json
