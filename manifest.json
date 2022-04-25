@@ -1,0 +1,10 @@
+{
+  "name": "PaletteKnife",
+  "id": "1100448884648144704",
+  "api": "1.0.0",
+  "main": "code.js",
+  "editorType": [
+    "figma"
+  ],
+  "ui": "ui.html"
+}

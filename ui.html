@@ -1,0 +1,46 @@
+<h2>PaletteKnife</h2>
+This plugin will find a <b>COMPONENT</b> called <i>PaintChip</i> and create
+instances of it with each color.
+<ul>
+  <li>
+    <i>PaintChip</i> should have a <b>RECTANGLE</b> node called <i>Color</i>
+  </li>
+  <li><i>PaintChip</i> should have a <b>TEXT</b> node called <i>Name</i></li>
+  <li>It will update or create new chips and palette styles as needed.</li>
+  <li>It will not remove outdated chips.</li>
+</ul>
+
+<p>
+  Palette:
+  <br />
+  <textarea rows="40" cols="60" id="colors" type="text">
+{
+  "name": "test",
+  "colors": {
+    "blackOverlay": "#0000007f",
+    "red": "#FF0000",
+    "blue": "#00F",
+    "green": "rgb(0,255,0)",
+    "whiteOverlay": "rgba(255,255,255,0.5)"
+  }
+}
+</textarea
+  >
+  <button id="create">Update</button>
+  <button id="cancel">Cancel</button>
+</p>
+
+<script>
+  document.getElementById("create").onclick = () => {
+    const textbox = document.getElementById("colors");
+    const colors = JSON.parse(textbox.value);
+    parent.postMessage(
+      { pluginMessage: { type: "create-palette", colors } },
+      "*"
+    );
+  };
+
+  document.getElementById("cancel").onclick = () => {
+    parent.postMessage({ pluginMessage: { type: "cancel" } }, "*");
+  };
+</script>
