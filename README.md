@@ -2,8 +2,7 @@
 
 The Figma plugin allows you to create and update ColorStyle palettes from a JSON description.
 
-You will need to first do the setup instructions, found here:
-https://www.figma.com/plugin-docs/setup/
+You will need to first do the [setup instructions](https://www.figma.com/plugin-docs/setup/).
 
 [Example](./Example.jpg)
 
@@ -22,9 +21,11 @@ Example:
 }
 ```
 
+![Example](./Example.jpg)
+
 Before it can work, you will need to create a Figma Component on the canvas. It should be constructed like so:
 
-- A COMPONENT named "PaletteChip", containing:
+- A COMPONENT named "PaletteChip", at the top level of the canvas, containing:
   - A RECTANGLE node with the name "Color"
   - A TEXT node with the name "Name"
 
