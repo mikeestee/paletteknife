@@ -1,6 +1,6 @@
 <h2>PaletteKnife</h2>
 This plugin will find a <b>COMPONENT</b> called <i>PaintChip</i> and create
-instances of it with each color.
+instances of it with each color. <button id="component">Make Me One</button>
 <ul>
   <li>
     <i>PaintChip</i> should have a <b>RECTANGLE</b> node called <i>Color</i>
@@ -13,7 +13,7 @@ instances of it with each color.
 <p>
   Palette:
   <br />
-  <textarea rows="40" cols="60" id="colors" type="text">
+  <textarea rows="10" cols="60" id="colors" type="text">
 {
   "name": "test",
   "colors": {
@@ -27,7 +27,7 @@ instances of it with each color.
 </textarea
   >
   <br />
-  <button id="create">Update</button>
+  <button id="create">Update Palette</button>
   <button id="cancel">Cancel</button>
 </p>
 
@@ -39,6 +39,10 @@ instances of it with each color.
       { pluginMessage: { type: "create-palette", colors } },
       "*"
     );
+  };
+
+  document.getElementById("component").onclick = () => {
+    parent.postMessage({ pluginMessage: { type: "create-component" } }, "*");
   };
 
   document.getElementById("cancel").onclick = () => {

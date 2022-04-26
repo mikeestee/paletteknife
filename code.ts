@@ -19,7 +19,7 @@ const findChild = (
 
 // Converts a color string, either #RRGGBB, #RRGGBBAA, #RGB, RGB() or RGBA() format
 // into an RGB or RGBA color object.
-const hexCodeToRGBA = (colorString: string): RGB | RGBA => {
+const stringToRGBA = (colorString: string): RGB | RGBA => {
   const _rgbRegEx = /^rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/i;
   const _rgbaRegEx =
     /^rgba\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+(?:\.\d+)?)\)/i;
@@ -73,6 +73,34 @@ const hexCodeToRGBA = (colorString: string): RGB | RGBA => {
   return { r: 0, g: 0, b: 0, a: 0 };
 };
 
+const hexToRgba = (hexColor: string): string => {
+  const rgba = stringToRGBA(hexColor) as RGBA;
+
+  if (rgba.a != undefined) {
+    return (
+      "rgba(" +
+      Math.round(rgba.r * 255) +
+      ", " +
+      Math.round(rgba.g * 255) +
+      ", " +
+      Math.round(rgba.b * 255) +
+      ", " +
+      rgba.a.toFixed(3) +
+      ")"
+    );
+  } else {
+    return (
+      "rgb(" +
+      Math.round(rgba.r * 255) +
+      ", " +
+      Math.round(rgba.g * 255) +
+      ", " +
+      Math.round(rgba.b * 255) +
+      ")"
+    );
+  }
+};
+
 // Updates a PaintStyle, or creates a new one if not found, and returns the styleId
 const updateStyleAndReturnID = (
   paintStyles: PaintStyle[],
@@ -116,7 +144,7 @@ const createPalette = (
 
         // parse the color
         const colorValue = paletteColors[colorName] as string;
-        const rgba = hexCodeToRGBA(colorValue) as RGBA;
+        const rgba = stringToRGBA(colorValue) as RGBA;
         const colorStyle: SolidPaint = {
           type: "SOLID",
           color: { r: rgba.r, g: rgba.g, b: rgba.b },
@@ -174,6 +202,52 @@ const createPalette = (
   figma.viewport.scrollAndZoomIntoView([frame]);
 };
 
+const multiFontLoader = async (nameNode: TextNode) => {
+  return await Promise.all(
+    nameNode
+      .getRangeAllFontNames(0, nameNode.characters.length)
+      .map(figma.loadFontAsync)
+  );
+};
+
+const createChipComponent = (fontName: FontName) => {
+  const chip = figma.createComponent();
+  chip.name = "PaintChip";
+  chip.resize(128, 32 + 4.0);
+  chip.layoutMode = "HORIZONTAL";
+  chip.itemSpacing = 4.0;
+  chip.counterAxisAlignItems = "CENTER";
+  chip.counterAxisSizingMode = "AUTO";
+  chip.primaryAxisSizingMode = "AUTO";
+
+  const rect = figma.createRectangle();
+  rect.name = "Color";
+  rect.resize(64, 32);
+  rect.fills = [{ type: "SOLID", color: { r: 1.0, g: 0, b: 0 } }];
+
+  const text = figma.createText();
+  text.name = "Name";
+  text.resize(64, 32);
+  text.x = 64;
+
+  // add to canvas
+  chip.appendChild(rect);
+  chip.appendChild(text);
+  figma.currentPage.appendChild(chip);
+  figma.viewport.scrollAndZoomIntoView([chip]);
+
+  // calls that require the font to be loaded
+  text.fontName = fontName;
+  text.fontSize = 12;
+  text.textAutoResize = "WIDTH_AND_HEIGHT";
+  text.textAlignVertical = "CENTER";
+  text.characters = "palette/color";
+};
+
+const singleFontLoader = async (fontName: FontName) => {
+  await figma.loadFontAsync(fontName);
+};
+
 // Runs this code if the plugin is run in Figma
 if (figma.editorType === "figma") {
   let loading = false;
@@ -181,7 +255,7 @@ if (figma.editorType === "figma") {
   // This shows the HTML page in "ui.html".
   const options: ShowUIOptions = {
     width: 600,
-    height: 400,
+    height: 440,
   };
   figma.showUI(__html__, options);
 
@@ -210,11 +284,7 @@ if (figma.editorType === "figma") {
         if (hasName && hasColor) {
           // we got far enough to load fonts, we'll close in the callback.
           loading = true;
-          Promise.all(
-            hasName
-              .getRangeAllFontNames(0, hasName.characters.length)
-              .map(figma.loadFontAsync)
-          )
+          multiFontLoader(hasName)
             .then(() => {
               createPalette(paletteName, paletteColors, paintChip);
               figma.closePlugin();
@@ -224,62 +294,27 @@ if (figma.editorType === "figma") {
               figma.closePlugin();
             });
         }
+      } else {
+        console.log(
+          "Unable to find PaintChip component at top-level of current page."
+        );
       }
-
-      // Make sure to close the plugin when you're done. Otherwise the plugin will
-      // keep running, which shows the cancel button at the bottom of the screen.
-      if (!loading) figma.closePlugin();
-    }
-  };
-
-  // If the plugins isn't run in Figma, run this code
-} else {
-  // This plugin will open a window to prompt the user to enter a number, and
-  // it will then create that many shapes and connectors on the screen.
-
-  // This shows the HTML page in "ui.html".
-  figma.showUI(__html__);
-
-  // Calls to "parent.postMessage" from within the HTML page will trigger this
-  // callback. The callback will be passed the "pluginMessage" property of the
-  // posted message.
-  figma.ui.onmessage = (msg) => {
-    // One way of distinguishing between different types of messages sent from
-    // your HTML page is to use an object with a "type" property like this.
-    if (msg.type === "create-shapes") {
-      const numberOfShapes = msg.count;
-      const nodes: SceneNode[] = [];
-      for (let i = 0; i < numberOfShapes; i++) {
-        const shape = figma.createShapeWithText();
-        // You can set shapeType to one of: 'SQUARE' | 'ELLIPSE' | 'ROUNDED_RECTANGLE' | 'DIAMOND' | 'TRIANGLE_UP' | 'TRIANGLE_DOWN' | 'PARALLELOGRAM_RIGHT' | 'PARALLELOGRAM_LEFT'
-        shape.shapeType = "ROUNDED_RECTANGLE";
-        shape.x = i * (shape.width + 200);
-        shape.fills = [{ type: "SOLID", color: { r: 1, g: 0.5, b: 0 } }];
-        figma.currentPage.appendChild(shape);
-        nodes.push(shape);
-      }
-
-      for (let i = 0; i < numberOfShapes - 1; i++) {
-        const connector = figma.createConnector();
-        connector.strokeWeight = 8;
-
-        connector.connectorStart = {
-          endpointNodeId: nodes[i].id,
-          magnet: "AUTO",
-        };
-
-        connector.connectorEnd = {
-          endpointNodeId: nodes[i + 1].id,
-          magnet: "AUTO",
-        };
-      }
-
-      figma.currentPage.selection = nodes;
-      figma.viewport.scrollAndZoomIntoView(nodes);
+    } else if (msg.type === "create-component") {
+      loading = true;
+      const fontName = { family: "Helvetica", style: "Regular" };
+      singleFontLoader(fontName)
+        .then(() => {
+          createChipComponent(fontName);
+          figma.closePlugin();
+        })
+        .catch((e) => {
+          console.log("Failed to create component", e);
+          figma.closePlugin();
+        });
     }
 
     // Make sure to close the plugin when you're done. Otherwise the plugin will
     // keep running, which shows the cancel button at the bottom of the screen.
-    figma.closePlugin();
+    if (!loading) figma.closePlugin();
   };
 }
