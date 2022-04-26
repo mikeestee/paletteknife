@@ -2,7 +2,7 @@
 
 The Figma plugin allows you to create and update ColorStyle palettes from a JSON description.
 
-You will need to first do the [setup instructions](https://www.figma.com/plugin-docs/setup/).
+To make changes, you will need to first do the [setup instructions](https://www.figma.com/plugin-docs/setup/). If you just want to load the plugin as-is, you can load it from the `Plugins/Development/Import plugin from manifest...` menu
 
 [Example](./Example.jpg)
 
